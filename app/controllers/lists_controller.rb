@@ -3,7 +3,12 @@ class ListsController < ApplicationController
   before_action :set_list, only: [:show, :edit, :update, :destroy]
 
   def show
+    @list = List.find(params[:id])
     @items = @list.items.completed
+      respond_to do |format|
+      format.html
+      format.json { render json: @list }
+    end
   end
 
   def new

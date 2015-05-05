@@ -1,39 +1,41 @@
-class Api::UserController < Api::ApiController
-respond_to :json
+module Api
+  class UsersController < ApiController
+    respond_to :json
 
-  def index
-    render json: @user.as_json(only: [:id, :username])
-  end
+    before_action :authenticated?
 
-  def create
-    user = User.new(user_params)
-    if user.save
-      render status: 200, json {
-        message: "Welcome to ToDo Api.",
-        user: user
-        }.to_json
-    else
-      render status: 422, json {
-        message: "There was an error.",
-        errors: list.errors
-      }.to_json
+    def index
+      @users = User.all
+      render json: @users
+    end
+
+    def create
+      user = User.new(user_params)
+
+      if user.save 
+        render json: user.to_json
+      else
+        render json: { errors: user.errors.full_messages },
+        status: :unprocessable_entity
+      end
+    end
+
+    def destroy
+      begin
+        user = User.find(params[:id])
+        user.destroy
+
+        render json: {}, status: :no_content
+        
+      rescue ActiveRecord::RecordNotFound
+        render :json => {}, :status => :not_found
+      end
+    end
+
+    private
+
+    def user_params
+      params.require(:user).permit(:username, :password)
     end
   end
-
-  def destroy
-    user = User.find(params[:id])
-    user.destroy
-    render status: 200, json: {
-      message: "Successfully deleted User.",
-      root: root
-    }.to_json
-  end
-
-  private
-
-  def user_params
-    params.require(:user).permit(:username, :password)
-  end
-
-
 end

@@ -1,9 +1,4 @@
-class ListSerializer < ActiveModel::ListSerializer
-
-  attributes :name
-  belongs_to :user
-  has_many :items
-
-  url [:user, :list]
+class ListSerializer < ActiveModel::Serializer
+  attributes :id, :name, :permissions, :user_id, :items
 
 end

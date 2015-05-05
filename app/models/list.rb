@@ -21,4 +21,7 @@ class List < ActiveRecord::Base
       false
     end
   end
+
+  validates :user, presence: true
+  validates_inclusion_of :permissions, in: %w( private viewable open )
 end

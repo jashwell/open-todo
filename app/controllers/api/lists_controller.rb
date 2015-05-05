@@ -1,58 +1,59 @@
-class Api::ListsController < Api::ApiController
+module Api
+  class ListsController < ApiController
+    respond_to :json
 
-  def index
-    render json: List.all
-  end
+    before_action :authenticated?
 
-  def show
-    list = current_user.lists.find(params[:id])
-    render json: list.as_json(include:[:items])
-  end
-
-  def create
-    list = current_user.lists.new(list_params)
-    if list.save
-      render status: 200, json: {
-        message: "Successfully created List.",
-        list: list
-      }.to_json
-    else
-      render status: 422, json {
-        errors: list.errors
-      }.to_json
+    def index
+      user = User.find(params[:user_id])
+      @lists = user.lists
+      render json: @lists
     end
-  end
 
-  def destroy
-    list = current_user.lists.find(params[:id])
-    list.destroy
-    render status: 200, json: {
-        message: "Successfully updated List.",
-        list: list
-    }.to_json
+    def show
+      list = List.includes(:items).find(params[:id])
+      render json: list
     end
-  end
 
-  def update
-    list = current_user.lists.find(params[:id])
-    if list.update(list_params)
-      render status: 200, json: {
-        message: "Successfully deleted List.",
-        list: list
-      }.to_json
-    else
-    render status: 422, json {
-        message: "List could not be updated.",
-        list: list
-      }.to_json
+    def create
+      user = User.find(params[:user_id])
+      list = List.new(list_params)
+      list.user_id = user.id
+      if list.save
+        render json: list.to_json
+      else
+        render json: { errors: list.errors.full_messages }, 
+        status: :unprocessable_entity
+      end
     end
+
+    def destroy
+      begin
+        list = List.find(params[:id])
+        list.destroy
+
+        render json: {}, status: :no_content
+      rescue ActiveRecord::RecordNotFound
+        render :json => {}, :status => :not_found
+      end
+    end
+
+    def update
+      list = List.find(params[:id])
+
+      if list.update(list_params)
+        render json: list.to_json
+      else
+        render json: { errors: list.errors.full_messages }, status: :unprocessable_entity
+      end
+
+    end
+
+
+    def list_params
+      params.require(:list).permit(:name, :permissions)
+
+    end
+
   end
-
-  private
-
-  def list_params
-    params.require("list").permit("name")
-
-  end
-
 end

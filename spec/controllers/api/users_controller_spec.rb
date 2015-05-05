@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe UsersController do
+describe Api::UsersController do
 
   before do
     User.destroy_all

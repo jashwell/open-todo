@@ -7,4 +7,6 @@ class Item < ActiveRecord::Base
   def mark_complete
     update_attribute(:completed, true)
   end
+
+  validates :list, presence: true
 end

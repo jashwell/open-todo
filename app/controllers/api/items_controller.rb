@@ -1,56 +1,42 @@
-class Api::ItemsController < Api::ApiController
+module Api
+  class ItemsController < ApiController
+    respond_to :json
 
-  before_filter :find_list
+    before_action :authenticated?
 
-  def create
-    item = @list.items.new(item_params)
-    if item.save
-      render status: 200, json {
-        message: "Successfully created Item.",
-        list: @list,
-        item: item
-      }.to_json
-    else
-      render status: 422, json {
-        message: "Item creation failed.",
-        errors: item.errors
-      }.to_json
-    end
+    def create
+      list = List.find(params[:list_id])
+      item = list.items.new(item_params)
 
-    def update
-      item = @list.item.find(params[:id])
-      if item.update(item_params)
-        render status: 200, json {
-          message: "Successfully updated item.",
-          list: @list,
-          item: item
-        }.to_json
+      if item.save
+        render json: item.to_json
       else
-        render status: 422, json {
-          message: "Update Item failed.",
-          errors: item.errors
-        }.to_json
+        render json: { errors: item.errors.full_messages },
+        status: :unprocessable_entity
       end
 
     end
 
-    def destroy
-      item = @list.item.find(params[:id])
-      item.destroy
-      render status: 200, json {
-        message: "Item deleted.",
-        list: @list
-        item: @item
-      }.to_json
+    def update
+      list = List.find(params[:list_id])
+      item = list.items.find(params[:id])
+
+      if item.update(item_params)
+        item.update_attribute(:completed, true)
+        render json: item.to_json
+      else
+        render json: { errors: item.errors.full_messages },
+        status: :unprocessable_entity
     end
+
+    end
+
 
     private
 
     def item_params
-      params.require("item").permit("description")
+      params.require(:item).permit(:description)
     end
 
-    def find_list
-      @list = current_user.lists.find(params[:list_id])
-    end
   end
+end
